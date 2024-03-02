@@ -1,7 +1,9 @@
 package cn.iaimi.cloversearch.controller;
 
 import cn.iaimi.cloversearch.common.BaseResponse;
+import cn.iaimi.cloversearch.common.ErrorCode;
 import cn.iaimi.cloversearch.common.ResultUtils;
+import cn.iaimi.cloversearch.exception.BusinessException;
 import cn.iaimi.cloversearch.model.dto.post.PostQueryRequest;
 import cn.iaimi.cloversearch.model.dto.search.SearchRequest;
 import cn.iaimi.cloversearch.model.dto.user.UserQueryRequest;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 搜索接口
@@ -49,24 +52,43 @@ public class SearchController {
         int current = searchRequest.getCurrent();
         int pageSize = searchRequest.getPageSize();
 
-        Page<Picture> picturePage = pictureService.searchPicture(searchText, current, pageSize);
+        // 异步任务优化
+        CompletableFuture<Page<Picture>> picTask = CompletableFuture.supplyAsync(
+                () -> pictureService.searchPicture(searchText, current, pageSize));
 
-        UserQueryRequest userQueryRequest = new UserQueryRequest();
-        userQueryRequest.setUserName(searchText);
-        userQueryRequest.setCurrent(current);
-        userQueryRequest.setPageSize(pageSize);
-        Page<UserVO> userVOPage = userService.listUserVOByPage(userQueryRequest);
+        CompletableFuture<Page<UserVO>> userTask = CompletableFuture.supplyAsync(
+                () -> {
+                    UserQueryRequest userQueryRequest = new UserQueryRequest();
+                    userQueryRequest.setUserName(searchText);
+                    userQueryRequest.setCurrent(current);
+                    userQueryRequest.setPageSize(pageSize);
+                    return userService.listUserVOByPage(userQueryRequest);
+                });
 
-        PostQueryRequest postQueryRequest = new PostQueryRequest();
-        postQueryRequest.setSearchText(searchText);
-        postQueryRequest.setCurrent(current);
-        postQueryRequest.setPageSize(pageSize);
-        Page<PostVO> postVOPage = postService.listPostVOByPage(postQueryRequest, request);
 
-        SearchVO searchVO = new SearchVO();
-        searchVO.setUserPage(userVOPage);
-        searchVO.setPostPage(postVOPage);
-        searchVO.setPicturePage(picturePage);
-        return ResultUtils.success(searchVO);
+        CompletableFuture<Page<PostVO>> postTask = CompletableFuture.supplyAsync(
+                () -> {
+                    PostQueryRequest postQueryRequest = new PostQueryRequest();
+                    postQueryRequest.setSearchText(searchText);
+                    postQueryRequest.setCurrent(current);
+                    postQueryRequest.setPageSize(pageSize);
+                    return postService.listPostVOByPage(postQueryRequest, request);
+                });
+
+        CompletableFuture.allOf(userTask, picTask, postTask).join();
+
+        try {
+            Page<UserVO> userVOPage = userTask.get();
+            Page<Picture> picturePage = picTask.get();
+            Page<PostVO> postVOPage = postTask.get();
+            SearchVO searchVO = new SearchVO();
+            searchVO.setUserPage(userVOPage);
+            searchVO.setPostPage(postVOPage);
+            searchVO.setPicturePage(picturePage);
+            return ResultUtils.success(searchVO);
+        } catch (Exception e) {
+            log.error("async task error: ", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
     }
 }
