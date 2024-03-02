@@ -5,6 +5,7 @@ import cn.iaimi.cloversearch.model.entity.User;
 import cn.iaimi.cloversearch.model.vo.LoginUserVO;
 import cn.iaimi.cloversearch.model.vo.UserVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.List;
@@ -118,5 +119,7 @@ public interface UserService extends IService<User> {
      * @return
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
+
+    Page<UserVO> listUserVOByPage(UserQueryRequest userQueryRequest);
 
 }

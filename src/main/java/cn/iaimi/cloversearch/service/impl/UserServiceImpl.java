@@ -14,6 +14,7 @@ import cn.iaimi.cloversearch.model.vo.UserVO;
 import cn.iaimi.cloversearch.service.UserService;
 import cn.iaimi.cloversearch.utils.SqlUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import java.util.ArrayList;
@@ -268,5 +269,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
                 sortField);
         return queryWrapper;
+    }
+
+    @Override
+    public Page<UserVO> listUserVOByPage(UserQueryRequest userQueryRequest) {
+        long current = userQueryRequest.getCurrent();
+        long size = userQueryRequest.getPageSize();
+
+        Page<User> userPage = this.page(new Page<>(current, size),
+                this.getQueryWrapper(userQueryRequest));
+        Page<UserVO> userVOPage = new Page<>(current, size, userPage.getTotal());
+        List<UserVO> userVO = this.getUserVO(userPage.getRecords());
+        userVOPage.setRecords(userVO);
+        return userVOPage;
     }
 }
