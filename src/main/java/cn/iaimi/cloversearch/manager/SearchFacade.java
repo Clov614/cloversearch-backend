@@ -1,10 +1,12 @@
 package cn.iaimi.cloversearch.manager;
 
+import cn.iaimi.cloversearch.adapter.DataSource;
 import cn.iaimi.cloversearch.adapter.PictureDataSource;
 import cn.iaimi.cloversearch.adapter.PostDataSource;
 import cn.iaimi.cloversearch.adapter.UserDataSource;
 import cn.iaimi.cloversearch.common.ErrorCode;
 import cn.iaimi.cloversearch.exception.BusinessException;
+import cn.iaimi.cloversearch.exception.ThrowUtils;
 import cn.iaimi.cloversearch.model.dto.search.SearchRequest;
 import cn.iaimi.cloversearch.model.entity.Picture;
 import cn.iaimi.cloversearch.model.enums.SearchTypeEnum;
@@ -13,11 +15,14 @@ import cn.iaimi.cloversearch.model.vo.SearchVO;
 import cn.iaimi.cloversearch.model.vo.UserVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -74,20 +79,16 @@ public class SearchFacade {
         int current = searchRequest.getCurrent();
         int pageSize = searchRequest.getPageSize();
 
+        Map<String, DataSource> typeDataSourceMap = new HashMap() {{
+            put(SearchTypeEnum.POST.getValue(), postDataSource);
+            put(SearchTypeEnum.PICTURE.getValue(), pictureDataSource);
+            put(SearchTypeEnum.USER.getValue(), userDataSource);
+        }};
+        DataSource dataSource = typeDataSourceMap.get(searchTypeEnum.getValue());
+        ThrowUtils.throwIf(null == dataSource, ErrorCode.PARAMS_ERROR, "searchType 没有匹配项");
+
         SearchVO searchVO = new SearchVO();
-        switch (searchTypeEnum) {
-            case USER:
-                searchVO.setUserPage(userDataSource.doSearch(searchText, current, pageSize));
-                break;
-            case POST:
-                searchVO.setPostPage(postDataSource.doSearch(searchText, current, pageSize));
-                break;
-            case PICTURE:
-                searchVO.setPicturePage(pictureDataSource.doSearch(searchText, current, pageSize));
-                break;
-            default:
-                throw new BusinessException(ErrorCode.PARAMS_ERROR, "searchType 没有匹配项");
-        }
+        searchVO.setDataPage(dataSource.doSearch(searchText, current, pageSize));
         return searchVO;
     }
 

@@ -21,5 +21,7 @@ public class SearchVO implements Serializable {
 
     private Page<Picture> picturePage;
 
+    private Page<Object> dataPage;
+
     private static final long serialVersionUID = -2948719107564307882L;
 }
