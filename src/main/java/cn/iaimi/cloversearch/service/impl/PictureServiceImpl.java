@@ -5,6 +5,7 @@ import cn.iaimi.cloversearch.common.ErrorCode;
 import cn.iaimi.cloversearch.exception.BusinessException;
 import cn.iaimi.cloversearch.model.entity.Picture;
 import cn.iaimi.cloversearch.service.PictureService;
+import cn.iaimi.cloversearch.utils.RestParamsUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -28,6 +29,9 @@ public class PictureServiceImpl implements PictureService {
 
     @Override
     public Page<Picture> searchPicture(String searchTest, long pageNum, long pageSize) {
+        // 判断是否为空 （查询图片不支持为空的searchText）
+        searchTest = RestParamsUtils.isBlankDefault(searchTest, "风景");
+
         long current = (pageNum - 1) * pageSize;
         String url = String.format("https://www.bing.com/images/search?q=%s&first=%d", searchTest, current);
         Document doc = null;

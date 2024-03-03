@@ -28,4 +28,16 @@ public class RestParamsUtils {
             return defaultStr;
         return target;
     }
+
+    public static int isBlankDefault(int target, int defaultVal) {
+        if (0 == target)
+            return defaultVal;
+        return target;
+    }
+
+    public static Integer isBlankDefault(Integer target, Integer defaultVal) {
+        if (null == target || 0 == target)
+            return defaultVal;
+        return target;
+    }
 }
