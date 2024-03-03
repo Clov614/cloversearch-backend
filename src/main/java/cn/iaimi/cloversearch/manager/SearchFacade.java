@@ -1,18 +1,16 @@
 package cn.iaimi.cloversearch.manager;
 
+import cn.iaimi.cloversearch.adapter.PictureDataSource;
+import cn.iaimi.cloversearch.adapter.PostDataSource;
+import cn.iaimi.cloversearch.adapter.UserDataSource;
 import cn.iaimi.cloversearch.common.ErrorCode;
 import cn.iaimi.cloversearch.exception.BusinessException;
-import cn.iaimi.cloversearch.model.dto.post.PostQueryRequest;
 import cn.iaimi.cloversearch.model.dto.search.SearchRequest;
-import cn.iaimi.cloversearch.model.dto.user.UserQueryRequest;
 import cn.iaimi.cloversearch.model.entity.Picture;
 import cn.iaimi.cloversearch.model.enums.SearchTypeEnum;
 import cn.iaimi.cloversearch.model.vo.PostVO;
 import cn.iaimi.cloversearch.model.vo.SearchVO;
 import cn.iaimi.cloversearch.model.vo.UserVO;
-import cn.iaimi.cloversearch.service.PictureService;
-import cn.iaimi.cloversearch.service.PostService;
-import cn.iaimi.cloversearch.service.UserService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -34,13 +32,13 @@ import java.util.concurrent.CompletableFuture;
 public class SearchFacade {
 
     @Resource
-    private PictureService pictureService;
+    private PictureDataSource pictureDataSource;
 
     @Resource
-    private UserService userService;
+    private UserDataSource userDataSource;
 
     @Resource
-    private PostService postService;
+    private PostDataSource postDataSource;
 
     /**
      * 搜索 manager
@@ -79,24 +77,13 @@ public class SearchFacade {
         SearchVO searchVO = new SearchVO();
         switch (searchTypeEnum) {
             case USER:
-                UserQueryRequest userQueryRequest = new UserQueryRequest();
-                userQueryRequest.setUserName(searchText);
-                userQueryRequest.setCurrent(current);
-                userQueryRequest.setPageSize(pageSize);
-                Page<UserVO> userVOPage = userService.listUserVOByPage(userQueryRequest);
-                searchVO.setUserPage(userVOPage);
+                searchVO.setUserPage(userDataSource.doSearch(searchText, current, pageSize));
                 break;
             case POST:
-                PostQueryRequest postQueryRequest = new PostQueryRequest();
-                postQueryRequest.setSearchText(searchText);
-                postQueryRequest.setCurrent(current);
-                postQueryRequest.setPageSize(pageSize);
-                Page<PostVO> postVOPage = postService.listPostVOByPage(postQueryRequest, request);
-                searchVO.setPostPage(postVOPage);
+                searchVO.setPostPage(postDataSource.doSearch(searchText, current, pageSize));
                 break;
             case PICTURE:
-                Page<Picture> picturePage = pictureService.searchPicture(searchText, current, pageSize);
-                searchVO.setPicturePage(picturePage);
+                searchVO.setPicturePage(pictureDataSource.doSearch(searchText, current, pageSize));
                 break;
             default:
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "searchType 没有匹配项");
@@ -113,33 +100,21 @@ public class SearchFacade {
 
         // 异步任务优化
         CompletableFuture<Page<Picture>> picTask = CompletableFuture.supplyAsync(
-                () -> pictureService.searchPicture(searchText, current, pageSize));
+                () -> pictureDataSource.doSearch(searchText, current, pageSize));
 
         CompletableFuture<Page<UserVO>> userTask = CompletableFuture.supplyAsync(
-                () -> {
-                    UserQueryRequest userQueryRequest = new UserQueryRequest();
-                    userQueryRequest.setUserName(searchText);
-                    userQueryRequest.setCurrent(current);
-                    userQueryRequest.setPageSize(pageSize);
-                    return userService.listUserVOByPage(userQueryRequest);
-                });
+                () -> userDataSource.doSearch(searchText, current, pageSize));
 
 
-        CompletableFuture<Page<PostVO>> postTask = CompletableFuture.supplyAsync(
-                () -> {
-                    PostQueryRequest postQueryRequest = new PostQueryRequest();
-                    postQueryRequest.setSearchText(searchText);
-                    postQueryRequest.setCurrent(current);
-                    postQueryRequest.setPageSize(pageSize);
-                    return postService.listPostVOByPage(postQueryRequest, request);
-                });
+//        CompletableFuture<Page<PostVO>> postTask = CompletableFuture.supplyAsync(
+//                () -> postDataSource.doSearch(searchText, current, pageSize));
 
-        CompletableFuture.allOf(userTask, picTask, postTask).join();
+        CompletableFuture.allOf(userTask, picTask).join();
 
         try {
             Page<UserVO> userVOPage = userTask.get();
             Page<Picture> picturePage = picTask.get();
-            Page<PostVO> postVOPage = postTask.get();
+            Page<PostVO> postVOPage = postDataSource.doSearch(searchText, current, pageSize);
             SearchVO searchVO = new SearchVO();
             searchVO.setUserPage(userVOPage);
             searchVO.setPostPage(postVOPage);
