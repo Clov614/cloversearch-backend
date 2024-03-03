@@ -1,10 +1,7 @@
 package cn.iaimi.cloversearch.manager;
 
-import cn.iaimi.cloversearch.datasource.DataSource;
-import cn.iaimi.cloversearch.datasource.PictureDataSource;
-import cn.iaimi.cloversearch.datasource.PostDataSource;
-import cn.iaimi.cloversearch.datasource.UserDataSource;
 import cn.iaimi.cloversearch.common.ErrorCode;
+import cn.iaimi.cloversearch.datasource.*;
 import cn.iaimi.cloversearch.exception.BusinessException;
 import cn.iaimi.cloversearch.exception.ThrowUtils;
 import cn.iaimi.cloversearch.model.dto.search.SearchRequest;
@@ -20,8 +17,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -34,6 +29,9 @@ import java.util.concurrent.CompletableFuture;
 @Component
 @Slf4j
 public class SearchFacade {
+
+    @Resource
+    private DataSourceRegistry dataSourceRegistry;
 
     @Resource
     private PictureDataSource pictureDataSource;
@@ -78,12 +76,7 @@ public class SearchFacade {
         int current = searchRequest.getCurrent();
         int pageSize = searchRequest.getPageSize();
 
-        Map<String, DataSource> typeDataSourceMap = new HashMap() {{
-            put(SearchTypeEnum.POST.getValue(), postDataSource);
-            put(SearchTypeEnum.PICTURE.getValue(), pictureDataSource);
-            put(SearchTypeEnum.USER.getValue(), userDataSource);
-        }};
-        DataSource dataSource = typeDataSourceMap.get(searchTypeEnum.getValue());
+        DataSource dataSource = dataSourceRegistry.getDataSourceByType(searchTypeEnum.getValue());
         ThrowUtils.throwIf(null == dataSource, ErrorCode.PARAMS_ERROR, "searchType 没有匹配项");
 
         SearchVO searchVO = new SearchVO();
