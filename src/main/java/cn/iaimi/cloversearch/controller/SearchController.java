@@ -31,7 +31,7 @@ public class SearchController {
 
     @PostMapping("/all")
     public BaseResponse<SearchVO> searchAll(@RequestBody SearchRequest searchRequest, HttpServletRequest request) {
-        // TODO 适配器模式(adapter)，从service中抽离出来 datasource 1.18.51
+        // TODO 适配器模式(datasource)，从service中抽离出来 datasource 1.18.51
         SearchVO searchVO = searchFacade.searchAll(searchRequest, request);
         return ResultUtils.success(searchVO);
     }

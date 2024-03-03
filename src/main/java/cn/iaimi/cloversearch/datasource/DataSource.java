@@ -1,4 +1,4 @@
-package cn.iaimi.cloversearch.adapter;
+package cn.iaimi.cloversearch.datasource;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 

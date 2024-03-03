@@ -1,4 +1,4 @@
-package cn.iaimi.cloversearch.adapter;
+package cn.iaimi.cloversearch.datasource;
 
 import cn.iaimi.cloversearch.model.entity.Picture;
 import cn.iaimi.cloversearch.service.PictureService;

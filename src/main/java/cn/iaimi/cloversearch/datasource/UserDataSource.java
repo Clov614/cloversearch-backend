@@ -1,4 +1,4 @@
-package cn.iaimi.cloversearch.adapter;
+package cn.iaimi.cloversearch.datasource;
 
 import cn.iaimi.cloversearch.model.dto.user.UserQueryRequest;
 import cn.iaimi.cloversearch.model.vo.UserVO;

@@ -1,9 +1,9 @@
 package cn.iaimi.cloversearch.manager;
 
-import cn.iaimi.cloversearch.adapter.DataSource;
-import cn.iaimi.cloversearch.adapter.PictureDataSource;
-import cn.iaimi.cloversearch.adapter.PostDataSource;
-import cn.iaimi.cloversearch.adapter.UserDataSource;
+import cn.iaimi.cloversearch.datasource.DataSource;
+import cn.iaimi.cloversearch.datasource.PictureDataSource;
+import cn.iaimi.cloversearch.datasource.PostDataSource;
+import cn.iaimi.cloversearch.datasource.UserDataSource;
 import cn.iaimi.cloversearch.common.ErrorCode;
 import cn.iaimi.cloversearch.exception.BusinessException;
 import cn.iaimi.cloversearch.exception.ThrowUtils;
@@ -15,7 +15,6 @@ import cn.iaimi.cloversearch.model.vo.SearchVO;
 import cn.iaimi.cloversearch.model.vo.UserVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
-import net.bytebuddy.implementation.bytecode.Throw;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 
