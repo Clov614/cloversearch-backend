@@ -15,6 +15,7 @@ public interface DataSource<T> {
      * @param searchText 搜索文本
      * @param current 分页当前页码
      * @param pageSize 分页大小
+     * todo 支持排序参数
      * @return
      */
     Page<T> doSearch(String searchText, int current, int pageSize);
